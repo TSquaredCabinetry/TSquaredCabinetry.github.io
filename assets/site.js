@@ -138,11 +138,11 @@
         fileList.append(totalItem);
       }
       if (total > MAX_BYTES) {
-        if (showDialog) showLimit('Sorry! The maximum size is 9 MB.');
+        if (showDialog) showLimit('Attachments are over 9 MB.');
         return false;
       }
       if (files.length > MAX_FILES) {
-        if (showDialog) showLimit('Sorry! Please choose up to five files.');
+        if (showDialog) showLimit('Please choose no more than five files.');
         return false;
       }
       if (files.some(file => !allowedExtensions.test(file.name))) {
