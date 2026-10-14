@@ -1,4 +1,4 @@
-/* T-Squared, no framework, no build tools, no external dependencies. */
+/* T-Squared — lightweight navigation, photo and silent-video galleries, inquiry validation. */
 (() => {
   'use strict';
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -6,195 +6,191 @@
   const nav = document.getElementById('site-navigation');
   if (menu && nav) {
     const close = () => { menu.setAttribute('aria-expanded','false'); nav.classList.remove('is-open'); };
-    menu.addEventListener('click', () => {
-      const open = menu.getAttribute('aria-expanded') !== 'true';
-      menu.setAttribute('aria-expanded', String(open));
-      nav.classList.toggle('is-open', open);
-    });
-    nav.addEventListener('click', event => { if (event.target.closest('a')) close(); });
-    document.addEventListener('keydown', event => { if (event.key === 'Escape') { close(); } });
-    document.addEventListener('click', event => { if (!event.target.closest('.nav-inner')) close(); });
+    menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded',String(open));nav.classList.toggle('is-open',open); });
+    nav.addEventListener('click',event=>{if(event.target.closest('a'))close();});
+    document.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
+    document.addEventListener('click',event=>{if(!event.target.closest('.nav-inner'))close();});
   }
   document.querySelectorAll('[data-year]').forEach(el => el.textContent = new Date().getFullYear());
-
-  // A slideshow is simply <div data-gallery="kitchens"></div>. Slides come
-  // from galleries.js; the same data powers every instance site-wide.
   const galleries = window.T2_GALLERIES || {};
-  const all = [...new Set(['kitchens','bathrooms','builtins','signs'])].flatMap(key => galleries[key] || []);
-  const escapeHTML = s => String(s || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const all = ['kitchens','bathrooms','builtins','signs'].flatMap(k => galleries[k] || []);
+  const escapeHTML = text => String(text ?? '').replace(/[&<>"']/g, x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
   function createGallery(root) {
-    const keys = root.dataset.gallery === 'all' ? all : (galleries[root.dataset.gallery] || []);
-    let photos = keys;
-    let index = 0;
-    const selector = root.dataset.gallery === 'all' ? 'All work' : root.dataset.gallery;
+    let items = root.dataset.gallery === 'all' ? all : (galleries[root.dataset.gallery] || []);
+    let current = 0;
     root.classList.add('gallery-shell');
     root.setAttribute('role','region');
-    root.setAttribute('aria-label', `${selector} project photo gallery`);
     root.setAttribute('tabindex','0');
+    root.setAttribute('aria-label','Project gallery: photos and silent walkthrough videos');
     root.innerHTML = `
-      <div class="gallery-stage"><a class="gallery-full" href="#" target="_blank" rel="noopener" aria-label="Open full image"><div class="gallery-image"></div></a></div>
+      <div class="gallery-stage"><div class="gallery-display"></div></div>
       <div class="gallery-caption"><div><strong data-caption-title></strong><span data-caption-note></span></div><div class="gallery-counter" aria-live="polite" aria-atomic="true"></div></div>
-      <div class="gallery-navigation"><div class="gallery-thumbnails" aria-label="Choose an image"></div><div class="gallery-arrows"><button type="button" data-prev aria-label="Previous image">←</button><button type="button" data-next aria-label="Next image">→</button></div></div>`;
-    const img = root.querySelector('.gallery-image');
-    const link = root.querySelector('.gallery-full');
-    const counter = root.querySelector('.gallery-counter');
-    const title = root.querySelector('[data-caption-title]');
-    const note = root.querySelector('[data-caption-note]');
+      <div class="gallery-navigation"><div class="gallery-thumbnails" aria-label="Choose a gallery item"></div><div class="gallery-arrows"><button type="button" data-prev aria-label="Previous project">←</button><button type="button" data-next aria-label="Next project">→</button></div></div>`;
+    const display = root.querySelector('.gallery-display');
     const thumbs = root.querySelector('.gallery-thumbnails');
-    const missingHTML = label => `<div class="placeholder"><span class="question" aria-hidden="true">?</span><span class="placeholder-label">${escapeHTML(label || 'Project image pending')}</span></div>`;
-    function renderThumbnails() {
-      thumbs.innerHTML = photos.map((photo, i) => `<button type="button" data-go="${i}" aria-label="Show ${escapeHTML(photo.title)}" aria-pressed="false">${photo.src ? `<img src="${escapeHTML(photo.src)}" alt="" loading="lazy">` : '<span class="tiny-question" aria-hidden="true">?</span>'}</button>`).join('');
-      thumbs.querySelectorAll('button').forEach(button => button.addEventListener('click', () => show(Number(button.dataset.go))));
+    const caption = root.querySelector('[data-caption-title]');
+    const detail = root.querySelector('[data-caption-note]');
+    const counter = root.querySelector('.gallery-counter');
+    function thumbnails() {
+      thumbs.innerHTML = items.map((it,i)=>`<button type="button" aria-label="View ${escapeHTML(it.title)}${it.video ? ', silent video' : ''}" data-go="${i}" aria-pressed="false"><img src="${escapeHTML(it.src)}" alt="" loading="lazy">${it.video?'<span class="film-icon" aria-hidden="true">▶</span>':''}</button>`).join('');
+      thumbs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>show(Number(b.dataset.go))));
     }
     function show(i) {
-      if (!photos.length) return;
-      index = (i + photos.length) % photos.length;
-      const photo = photos[index];
-      img.innerHTML = photo.src ? `<img src="${escapeHTML(photo.src)}" alt="${escapeHTML(photo.alt || photo.title)}" ${index !== 0 ? 'loading="lazy"' : ''}>` : missingHTML(photo.title);
-      link.href = photo.src || '#';
-      link.style.pointerEvents = photo.src ? '' : 'none';
-      link.setAttribute('aria-label', photo.src ? `Open full photo: ${photo.title}` : `${photo.title}, photo pending`);
-      title.textContent = photo.title;
-      note.textContent = photo.missing ? 'Project photograph pending.' : 'Open full photograph';
-      counter.textContent = `${String(index+1).padStart(2,'0')} / ${String(photos.length).padStart(2,'0')}`;
-      thumbs.querySelectorAll('button').forEach((button,j) => button.setAttribute('aria-pressed', String(j === index)));
-      const chosen = thumbs.children[index];
-      if (chosen) thumbs.scrollTo({left: Math.max(0, chosen.offsetLeft - thumbs.offsetLeft - 12), behavior: reduce.matches ? 'instant' : 'smooth'});
-    }
-    function reset(list) { photos = list.length ? list : [{title:'Project photos to come',missing:true}]; index=0;renderThumbnails();show(0); }
-    root.querySelector('[data-prev]').addEventListener('click', () => show(index - 1));
-    root.querySelector('[data-next]').addEventListener('click', () => show(index + 1));
-    root.addEventListener('keydown', event => {
-      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') { event.preventDefault(); show(index + (event.key === 'ArrowRight' ? 1 : -1)); }
-    });
-    let down = null;
-    let swallowClick = false;
-    link.addEventListener('click', event => {
-      if (!swallowClick) return;
-      event.preventDefault();
-      swallowClick = false;
-    });
-    root.querySelector('.gallery-stage').addEventListener('pointerdown', event => {
-      if (event.pointerType === 'touch') down = { x:event.clientX,y:event.clientY };
-    });
-    root.querySelector('.gallery-stage').addEventListener('pointerup', event => {
-      if (!down) return;
-      const dx = event.clientX - down.x,dy = event.clientY - down.y;
-      if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.3) {
-        show(index + (dx < 0 ? 1 : -1));
-        // A finger swipe shouldn't accidentally open the underlying image.
-        swallowClick = true;
-        window.setTimeout(() => { swallowClick = false; }, 350);
+      if(!items.length)return;
+      const playing = display.querySelector('video'); if (playing) playing.pause();
+      current = (i+items.length)%items.length;
+      const it=items[current];
+      if(it.video) {
+        display.innerHTML=`<video controls muted playsinline preload="none" poster="${escapeHTML(it.src)}" aria-label="${escapeHTML(it.alt||it.title)}"><source src="${escapeHTML(it.video)}" type="video/mp4">Your browser cannot play this video. <a href="${escapeHTML(it.video)}">Open the film</a>.</video><span class="video-note">SILENT WALKTHROUGH</span>`;
+        display.classList.add('has-video');
+      } else {
+        display.innerHTML=`<a href="${escapeHTML(it.src)}" target="_blank" rel="noopener" aria-label="Open large photograph: ${escapeHTML(it.title)}"><img src="${escapeHTML(it.src)}" alt="${escapeHTML(it.alt||it.title)}" loading="${current===0?'eager':'lazy'}"></a>`;
+        display.classList.remove('has-video');
       }
-      down = null;
+      caption.textContent=it.title;
+      detail.textContent=it.detail || (it.video?'Silent film · Press play':'View full photograph');
+      counter.textContent=`${String(current+1).padStart(2,'0')} / ${String(items.length).padStart(2,'0')}`;
+      thumbs.querySelectorAll('button').forEach((b,j)=>b.setAttribute('aria-pressed',String(j===current)));
+      const chosen=thumbs.children[current];
+      if(chosen)thumbs.scrollTo({left:Math.max(0,chosen.offsetLeft-thumbs.offsetLeft-12),behavior:reduce.matches?'instant':'smooth'});
+    }
+    function reset(entries){items=entries;current=0;thumbnails();show(0);}
+    root.querySelector('[data-prev]').addEventListener('click',()=>show(current-1));
+    root.querySelector('[data-next]').addEventListener('click',()=>show(current+1));
+    root.addEventListener('keydown',event=>{
+      if(event.target.closest('button, video, a, input, select, textarea'))return;
+      if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();show(current+(event.key==='ArrowRight'?1:-1));}
     });
-    root.querySelector('.gallery-stage').addEventListener('pointercancel', () => down=null);
-    reset(photos);
+    let start = null;
+    root.querySelector('.gallery-stage').addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!e.target.closest('video'))start={x:e.clientX,y:e.clientY};});
+    root.querySelector('.gallery-stage').addEventListener('pointerup',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y; if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.3)show(current+(dx<0?1:-1));start=null;});
+    reset(items);
     return reset;
   }
-  const mainGallery = document.querySelector('[data-gallery="all"]');
-  const changeMain = mainGallery ? createGallery(mainGallery) : null;
+  const main=document.querySelector('[data-gallery="all"]');
+  const changeMain=main?createGallery(main):null;
   document.querySelectorAll('[data-gallery]:not([data-gallery="all"])').forEach(createGallery);
-  document.querySelectorAll('[data-gallery-filter]').forEach(button => button.addEventListener('click', () => {
-    document.querySelectorAll('[data-gallery-filter]').forEach(other => other.setAttribute('aria-pressed', String(other === button)));
-    const filter = button.dataset.galleryFilter;
-    changeMain?.(filter === 'all' ? all : (galleries[filter] || []));
+  document.querySelectorAll('[data-gallery-filter]').forEach(button=>button.addEventListener('click',()=>{
+    document.querySelectorAll('[data-gallery-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
+    const key=button.dataset.galleryFilter;
+    changeMain?.(key==='all'?all:(galleries[key]||[]));
   }));
 
+  // Estimate form: FormSubmit handles native multipart POST, attachment delivery,
+  // its own CAPTCHA, and the _honey field. Do not AJAX file uploads here.
   const form = document.getElementById('inquiry-form');
   if (form) {
-    const service = new URLSearchParams(location.search).get('service');
     const select = form.elements.namedItem('service');
-    if (select && service && [...select.options].some(option => option.value === service)) select.value = service;
-    const preview = document.getElementById('request-preview');
-    const content = document.getElementById('request-content');
-    const status = document.getElementById('copy-status');
+    const preselected = new URLSearchParams(location.search).get('service');
+    if (preselected && [...select.options].some(option => option.value === preselected)) select.value = preselected;
+
     const fileInput = document.getElementById('project-files');
     const fileList = document.getElementById('file-list');
+    const uploadError = document.getElementById('upload-error');
     const methodError = document.getElementById('contact-method-error');
-    const MAX_FILES = 5, MAX_TOTAL_SIZE = 9 * 1024 * 1024; // Keep below FormSubmit.co's 10 MB attachment cap.
-    const endpoint = (form.dataset.endpoint || '').trim();
+    const setupError = document.getElementById('form-setup-error');
+    const dialog = document.getElementById('upload-limit-dialog');
+    const dialogTitle = document.getElementById('upload-dialog-title');
+    const submitButton = form.querySelector('button[type="submit"]');
+    const MAX_FILES = 5;
+    const MAX_BYTES = 9 * 1024 * 1024; // FormSubmit permits up to 10 MB total.
     const allowedExtensions = /\.(pdf|png|jpe?g|webp|heic|docx?|txt)$/i;
-    const displayFiles = () => {
-      fileList.replaceChildren();
-      [...fileInput.files].forEach(file => {
-        const li = document.createElement('li');
-        li.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
-        fileList.append(li);
-      });
-    };
-    fileInput.addEventListener('change', displayFiles);
-    if (endpoint) {
-      // A genuine multipart-capable, secure, owner-verified endpoint is required.
-      const help = form.querySelector('.file-help');
-      const endNote = form.querySelector('.form-end small');
-      const submit = form.querySelector('button[type="submit"]');
-      if (help) help.textContent = 'Choose up to 5 files, 9 MB combined (PDF, image or document). They will be included with your inquiry.';
-      if (endNote) endNote.textContent = 'Use the form to submit an estimate request. We will review the details and contact you.';
-      if (submit) submit.textContent = 'Send project inquiry ↗';
+
+    // Only edit this address in contact.html. It also supplies the mailto fallback.
+    const configuredURL = form.getAttribute('action') || '';
+    const match = configuredURL.match(/^https:\/\/formsubmit\.co\/([^/?#]+)$/i);
+    const destination = match ? decodeURIComponent(match[1]) : '';
+    const ready = !!destination && destination !== 'REPLACE_WITH_BUSINESS_EMAIL' &&
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination);
+    if (ready) {
+      // FormSubmit requires _next to be an absolute URL. Resolving at runtime
+      // also supports GitHub Pages project subpaths and custom domains.
+      form.elements.namedItem('_next').value = new URL('inquiry-sent.html', location.href).href;
     }
-    form.addEventListener('submit', async event => {
-      event.preventDefault();
-      if (!form.reportValidity()) return;
-      const data = new FormData(form);
-      const email = String(data.get('email') || '').trim();
-      const phone = String(data.get('phone') || '').trim();
-      if (!email && !phone) { methodError.hidden = false; form.elements.namedItem('email').focus(); return; }
-      methodError.hidden = true;
-      const files = [...fileInput.files];
-      if (files.length > MAX_FILES || files.reduce((total, file) => total + file.size, 0) > MAX_TOTAL_SIZE || files.some(file => !allowedExtensions.test(file.name))) {
-        window.alert('Please choose up to five PDF, image or document files, no more than 9 MB combined. For larger plans or photographs, include a share link in the project details.');
-        fileInput.focus();
-        return;
+
+    function showLimit(message) {
+      dialogTitle.textContent = message;
+      if (typeof dialog.showModal === 'function') dialog.showModal();
+      else { // Older browsers retain the always-visible email fallback by the file picker.
+        uploadError.textContent = `${message} Please send the inquiry without large attachments; we can arrange files later.`;
+        uploadError.hidden = false;
       }
-      if (endpoint) {
-        const button = form.querySelector('button[type="submit"]');
-        button.disabled = true; button.textContent = 'Sending…';
-        try {
-          // FormSubmit.co's documentation allows multiple named file fields.
-          // Turn the browser's multi-file input into separate fields for that provider.
-          const isFormSubmit = /^https:\/\/formsubmit\.co\/ajax\//i.test(endpoint);
-          if (isFormSubmit) {
-            data.delete('files');
-            files.forEach((file, i) => data.append(`attachment_${i + 1}`, file, file.name));
-          }
-          // Keep multipart boundaries under browser control; never set Content-Type yourself.
-          const response = await fetch(endpoint, {method: 'POST', body: data, headers: {'Accept': 'application/json'}});
-          const responseType = response.headers.get('content-type') || '';
-          const result = responseType.includes('application/json') ? await response.json() : null;
-          // HTML responses from FormSubmit could be activation or CAPTCHA screens, not proof of delivery.
-          if (!response.ok || (isFormSubmit && !result) || result?.success === false || result?.success === 'false' || result?.ok === false) {
-            throw new Error('The submission was not confirmed by the form provider.');
-          }
-          preview.hidden = false;
-          preview.querySelector('h3').textContent = 'Inquiry received';
-          preview.querySelector('p.small').textContent = 'Your project details were submitted. Please call if the request is urgent.';
-          content.textContent = 'Thank you. Your estimate request has been sent.';
-          preview.querySelector('#copy-request').hidden = true;
-          status.textContent = '';
-          form.reset(); displayFiles();
-        } catch (error) {
-          preview.hidden = false;
-          preview.querySelector('h3').textContent = 'Could not send your inquiry';
-          preview.querySelector('p.small').textContent = 'Please call 336-655-0208 to discuss the project instead. Your form details have not been confirmed as received.';
-          content.textContent = '';
-          status.textContent = '';
-        } finally { button.disabled = false; button.textContent = 'Send project inquiry ↗'; }
-        preview.scrollIntoView({behavior: reduce.matches ? 'instant' : 'smooth', block:'nearest'});
-        return;
-      }
-      const text = `T-SQUARED PROJECT INQUIRY\n\nName: ${data.get('name')}\nEmail: ${email || 'Not provided'}\nPhone: ${phone || 'Not provided'}\nService: ${data.get('service')}\nProject location: ${data.get('location') || 'To discuss'}\nDimensions: ${data.get('dimensions') || 'To discuss'}\n\nProject details:\n${data.get('message')}\n\nSelected files (NOT sent): ${files.length ? files.map(file => file.name).join(', ') : 'None'}`;
-      preview.querySelector('h3').textContent = 'Inquiry preview';
-      preview.querySelector('p.small').textContent = 'Copy your project notes to keep them handy when you call. Nothing has been sent. Any selected files remain on your device.';
-      preview.querySelector('#copy-request').hidden = false;
-      content.textContent = text;
-      status.textContent = 'Preview only. No inquiry or files have been sent.';
-      preview.hidden = false;
-      preview.scrollIntoView({behavior: reduce.matches ? 'instant' : 'smooth', block:'nearest'});
+    }
+    document.getElementById('upload-dialog-close').addEventListener('click', () => dialog.close());
+    dialog.addEventListener('click', event => {
+      // Clicking the backdrop dismisses the dialog; not the content.
+      if (event.target === dialog) dialog.close();
     });
-    document.getElementById('copy-request').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(content.textContent); status.textContent = 'Copied to clipboard. No message or file was sent.'; }
-      catch { status.textContent = 'Clipboard unavailable here. Select the text above and copy it manually.'; }
+    function checkFiles(showDialog) {
+      uploadError.hidden = true;
+      const files = [...fileInput.files];
+      const total = files.reduce((sum, file) => sum + file.size, 0);
+      fileList.replaceChildren();
+      for (const file of files) {
+        const item = document.createElement('li');
+        item.textContent = `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`;
+        fileList.append(item);
+      }
+      if (files.length) {
+        const totalItem = document.createElement('li');
+        totalItem.className = 'file-total';
+        totalItem.textContent = `Total: ${(total / 1024 / 1024).toFixed(1)} MB`;
+        fileList.append(totalItem);
+      }
+      if (total > MAX_BYTES) {
+        if (showDialog) showLimit('Sorry! The maximum size is 9 MB.');
+        return false;
+      }
+      if (files.length > MAX_FILES) {
+        if (showDialog) showLimit('Sorry! Please choose up to five files.');
+        return false;
+      }
+      if (files.some(file => !allowedExtensions.test(file.name))) {
+        uploadError.textContent = 'Please use PDF, JPG, PNG, WEBP, HEIC, DOC, DOCX or TXT files.';
+        uploadError.hidden = false;
+        return false;
+      }
+      return true;
+    }
+    fileInput.addEventListener('change', () => checkFiles(true));
+
+    // Native formdata event retains standard browser POST + CAPTCHA, while each
+    // selected file gets a separate multipart part (as FormSubmit documents).
+    form.addEventListener('formdata', event => {
+      const files = [...fileInput.files];
+      event.formData.delete('files');
+      files.forEach((file, index) => event.formData.append(`attachment_${index + 1}`, file, file.name));
+    });
+    form.addEventListener('submit', event => {
+      const email = String(form.elements.namedItem('email').value).trim();
+      const phone = String(form.elements.namedItem('phone').value).trim();
+      methodError.hidden = !!(email || phone);
+      setupError.hidden = true;
+      if (!email && !phone) {
+        event.preventDefault();
+        form.elements.namedItem('email').focus();
+        return;
+      }
+      if (!checkFiles(true)) {
+        event.preventDefault();
+        return;
+      }
+      if (!ready) {
+        event.preventDefault();
+        setupError.textContent = 'Online inquiries are not yet connected. Please call 336-655-0208.';
+        setupError.hidden = false;
+        setupError.scrollIntoView({block:'nearest'});
+        return;
+      }
+      // Give inquiries a recognizable subject for inbox filters, including CNC sign work.
+      form.elements.namedItem('_subject').value = 'T-Squared website inquiry | ' + String(select.value || 'New project');
+      // Do not preventDefault here. The native POST is required for attachments.
+      submitButton.disabled = true;
+      submitButton.textContent = 'Sending…';
+    });
+    window.addEventListener('pageshow', () => {
+      submitButton.disabled = false;
+      submitButton.textContent = 'Send project inquiry ↗';
     });
   }
 })();
