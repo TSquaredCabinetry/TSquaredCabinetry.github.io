@@ -77,7 +77,8 @@
   }));
 
   // Estimate form: FormSubmit handles native multipart POST, attachment delivery,
-  // its own CAPTCHA, and the _honey field. Do not AJAX file uploads here.
+  // its own CAPTCHA. Do not AJAX file uploads here. Use the native response
+  // while investigating form activation/delivery.
   const form = document.getElementById('inquiry-form');
   if (form) {
     const select = form.elements.namedItem('service');
@@ -102,10 +103,26 @@
     const destination = match ? decodeURIComponent(match[1]) : '';
     const ready = !!destination && destination !== 'REPLACE_WITH_BUSINESS_EMAIL' &&
       /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination);
-    if (ready) {
-      // FormSubmit requires _next to be an absolute URL. Resolving at runtime
-      // also supports GitHub Pages project subpaths and custom domains.
-      form.elements.namedItem('_next').value = new URL('inquiry-sent.html', location.href).href;
+    // Attach the full public form URL as FormSubmit recommends when the
+    // browser only sends an origin-level Referrer or the header is missing.
+    // Do not populate _url on file:// or local previews.
+    const hosted = (location.protocol === 'https:' || location.protocol === 'http:') &&
+      !['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+    const sourceField = form.elements.namedItem('_url');
+    if (sourceField) {
+      if (hosted) sourceField.value = new URL(location.pathname, location.origin).href;
+      else sourceField.disabled = true;
+    }
+
+    // Hold the branded redirect until someone verifies an inquiry in Gmail.
+    // Once verified, set this to true. Native POST + CAPTCHA remain enabled.
+    const ENABLE_CUSTOM_THANK_YOU = false;
+    if (ready && hosted && ENABLE_CUSTOM_THANK_YOU) {
+      const redirect = document.createElement('input');
+      redirect.type = 'hidden';
+      redirect.name = '_next';
+      redirect.value = new URL('inquiry-sent.html', location.href).href;
+      form.appendChild(redirect);
     }
 
     function showLimit(message) {
@@ -175,9 +192,11 @@
         event.preventDefault();
         return;
       }
-      if (!ready) {
+      if (!ready || location.protocol === 'file:') {
         event.preventDefault();
-        setupError.textContent = 'Online inquiries are not yet connected. Please call 336-655-0208.';
+        setupError.textContent = !ready
+          ? 'Online inquiries are not yet connected. Please call 336-655-0208.'
+          : 'This form needs to be opened on the published website to test email delivery.';
         setupError.hidden = false;
         setupError.scrollIntoView({block:'nearest'});
         return;
