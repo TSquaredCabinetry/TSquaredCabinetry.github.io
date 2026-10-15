@@ -5,23 +5,36 @@
   const menu = document.querySelector('[data-menu-toggle]');
   const nav = document.getElementById('site-navigation');
   if (menu && nav) {
-    const close = () => { menu.setAttribute('aria-expanded','false'); nav.classList.remove('is-open'); };
-    menu.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded',String(open));nav.classList.toggle('is-open',open); });
-    nav.addEventListener('click',event=>{if(event.target.closest('a'))close();});
-    document.addEventListener('keydown',event=>{if(event.key==='Escape')close();});
-    document.addEventListener('click',event=>{if(!event.target.closest('.nav-inner'))close();});
+    const close = () => {
+      menu.setAttribute('aria-expanded', 'false');
+      nav.classList.remove('is-open');
+    };
+    menu.addEventListener('click', () => {
+      const open = menu.getAttribute('aria-expanded') !== 'true';
+      menu.setAttribute('aria-expanded', String(open));
+      nav.classList.toggle('is-open', open);
+    });
+    nav.addEventListener('click', event => {
+      if (event.target.closest('a')) close();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape') close();
+    });
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.nav-inner')) close();
+    });
   }
   document.querySelectorAll('[data-year]').forEach(el => el.textContent = new Date().getFullYear());
   const galleries = window.T2_GALLERIES || {};
-  const all = ['kitchens','bathrooms','builtins','signs'].flatMap(k => galleries[k] || []);
-  const escapeHTML = text => String(text ?? '').replace(/[&<>"']/g, x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+  const all = ['kitchens', 'bathrooms', 'builtins', 'signs'].flatMap(k => galleries[k] || []);
+  const escapeHTML = text => String(text ?? '').replace(/[&<>"']/g, x => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[x]));
   function createGallery(root) {
     let items = root.dataset.gallery === 'all' ? all : (galleries[root.dataset.gallery] || []);
     let current = 0;
     root.classList.add('gallery-shell');
-    root.setAttribute('role','region');
-    root.setAttribute('tabindex','0');
-    root.setAttribute('aria-label','Project gallery: photos and silent walkthrough videos');
+    root.setAttribute('role', 'region');
+    root.setAttribute('tabindex', '0');
+    root.setAttribute('aria-label', 'Project gallery: photos and silent walkthrough videos');
     root.innerHTML = `
       <div class="gallery-stage"><div class="gallery-display"></div></div>
       <div class="gallery-caption"><div><strong data-caption-title></strong><span data-caption-note></span></div><div class="gallery-counter" aria-live="polite" aria-atomic="true"></div></div>
@@ -32,48 +45,64 @@
     const detail = root.querySelector('[data-caption-note]');
     const counter = root.querySelector('.gallery-counter');
     function thumbnails() {
-      thumbs.innerHTML = items.map((it,i)=>`<button type="button" aria-label="View ${escapeHTML(it.title)}${it.video ? ', silent video' : ''}" data-go="${i}" aria-pressed="false"><img src="${escapeHTML(it.src)}" alt="" loading="lazy">${it.video?'<span class="film-icon" aria-hidden="true">▶</span>':''}</button>`).join('');
-      thumbs.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>show(Number(b.dataset.go))));
+      thumbs.innerHTML = items.map((it, i) => `<button type="button" aria-label="View ${escapeHTML(it.title)}${it.video ? ', silent video' : ''}" data-go="${i}" aria-pressed="false"><img src="${escapeHTML(it.src)}" alt="" loading="lazy">${it.video ? '<span class="film-icon" aria-hidden="true">▶</span>' : ''}</button>`).join('');
+      thumbs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => show(Number(b.dataset.go))));
     }
     function show(i) {
-      if(!items.length)return;
-      const playing = display.querySelector('video'); if (playing) playing.pause();
-      current = (i+items.length)%items.length;
-      const it=items[current];
-      if(it.video) {
-        display.innerHTML=`<video controls muted playsinline preload="none" poster="${escapeHTML(it.src)}" aria-label="${escapeHTML(it.alt||it.title)}"><source src="${escapeHTML(it.video)}" type="video/mp4">Your browser cannot play this video. <a href="${escapeHTML(it.video)}">Open the film</a>.</video><span class="video-note">SILENT WALKTHROUGH</span>`;
+      if (!items.length) return;
+      const playing = display.querySelector('video');
+      if (playing) playing.pause();
+      current = (i + items.length) % items.length;
+      const it = items[current];
+      if (it.video) {
+        display.innerHTML = `<video controls muted playsinline preload="none" poster="${escapeHTML(it.src)}" aria-label="${escapeHTML(it.alt || it.title)}"><source src="${escapeHTML(it.video)}" type="video/mp4">Your browser cannot play this video. <a href="${escapeHTML(it.video)}">Open the film</a>.</video><span class="video-note">SILENT WALKTHROUGH</span>`;
         display.classList.add('has-video');
       } else {
-        display.innerHTML=`<a href="${escapeHTML(it.src)}" target="_blank" rel="noopener" aria-label="Open large photograph: ${escapeHTML(it.title)}"><img src="${escapeHTML(it.src)}" alt="${escapeHTML(it.alt||it.title)}" loading="${current===0?'eager':'lazy'}"></a>`;
+        display.innerHTML = `<a href="${escapeHTML(it.src)}" target="_blank" rel="noopener" aria-label="Open large photograph: ${escapeHTML(it.title)}"><img src="${escapeHTML(it.src)}" alt="${escapeHTML(it.alt || it.title)}" loading="${current === 0 ? 'eager' : 'lazy'}"></a>`;
         display.classList.remove('has-video');
       }
-      caption.textContent=it.title;
-      detail.textContent=it.detail || (it.video?'Silent film · Press play':'View full photograph');
-      counter.textContent=`${String(current+1).padStart(2,'0')} / ${String(items.length).padStart(2,'0')}`;
-      thumbs.querySelectorAll('button').forEach((b,j)=>b.setAttribute('aria-pressed',String(j===current)));
-      const chosen=thumbs.children[current];
-      if(chosen)thumbs.scrollTo({left:Math.max(0,chosen.offsetLeft-thumbs.offsetLeft-12),behavior:reduce.matches?'instant':'smooth'});
+      caption.textContent = it.title;
+      detail.textContent = it.detail || (it.video ? 'Silent film · Press play' : 'View full photograph');
+      counter.textContent = `${String(current + 1).padStart(2, '0')} / ${String(items.length).padStart(2, '0')}`;
+      thumbs.querySelectorAll('button').forEach((b, j) => b.setAttribute('aria-pressed', String(j === current)));
+      const chosen = thumbs.children[current];
+      if (chosen) thumbs.scrollTo({ left: Math.max(0, chosen.offsetLeft - thumbs.offsetLeft - 12), behavior: reduce.matches ? 'instant' : 'smooth' });
     }
-    function reset(entries){items=entries;current=0;thumbnails();show(0);}
-    root.querySelector('[data-prev]').addEventListener('click',()=>show(current-1));
-    root.querySelector('[data-next]').addEventListener('click',()=>show(current+1));
-    root.addEventListener('keydown',event=>{
-      if(event.target.closest('button, video, a, input, select, textarea'))return;
-      if(event.key==='ArrowLeft'||event.key==='ArrowRight'){event.preventDefault();show(current+(event.key==='ArrowRight'?1:-1));}
+    function reset(entries) {
+      items = entries;
+      current = 0;
+      thumbnails();
+      show(0);
+    }
+    root.querySelector('[data-prev]').addEventListener('click', () => show(current - 1));
+    root.querySelector('[data-next]').addEventListener('click', () => show(current + 1));
+    root.addEventListener('keydown', event => {
+      if (event.target.closest('button, video, a, input, select, textarea')) return;
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+        event.preventDefault();
+        show(current + (event.key === 'ArrowRight' ? 1 : -1));
+      }
     });
     let start = null;
-    root.querySelector('.gallery-stage').addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&!e.target.closest('video'))start={x:e.clientX,y:e.clientY};});
-    root.querySelector('.gallery-stage').addEventListener('pointerup',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y; if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.3)show(current+(dx<0?1:-1));start=null;});
+    root.querySelector('.gallery-stage').addEventListener('pointerdown', e => {
+      if (e.pointerType === 'touch' && !e.target.closest('video')) start = { x: e.clientX, y: e.clientY };
+    });
+    root.querySelector('.gallery-stage').addEventListener('pointerup', e => {
+      if (!start) return;
+      const dx = e.clientX - start.x, dy = e.clientY - start.y;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.3) show(current + (dx < 0 ? 1 : -1));
+      start = null;
+    });
     reset(items);
     return reset;
   }
-  const main=document.querySelector('[data-gallery="all"]');
-  const changeMain=main?createGallery(main):null;
+  const main = document.querySelector('[data-gallery="all"]');
+  const changeMain = main ? createGallery(main) : null;
   document.querySelectorAll('[data-gallery]:not([data-gallery="all"])').forEach(createGallery);
-  document.querySelectorAll('[data-gallery-filter]').forEach(button=>button.addEventListener('click',()=>{
-    document.querySelectorAll('[data-gallery-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));
-    const key=button.dataset.galleryFilter;
-    changeMain?.(key==='all'?all:(galleries[key]||[]));
+  document.querySelectorAll('[data-gallery-filter]').forEach(button => button.addEventListener('click', () => {
+    document.querySelectorAll('[data-gallery-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    const key = button.dataset.galleryFilter;
+    changeMain?.(key === 'all' ? all : (galleries[key] || []));
   }));
 
   // Estimate form: FormSubmit handles native multipart POST, attachment delivery,
@@ -198,7 +227,7 @@
           ? 'Online inquiries are not yet connected. Please call 336-655-0208.'
           : 'This form needs to be opened on the published website to test email delivery.';
         setupError.hidden = false;
-        setupError.scrollIntoView({block:'nearest'});
+        setupError.scrollIntoView({ block: 'nearest' });
         return;
       }
       // Give inquiries a recognizable subject for inbox filters, including CNC sign work.
