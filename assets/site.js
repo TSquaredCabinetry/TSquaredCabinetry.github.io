@@ -114,6 +114,12 @@
     const preselected = new URLSearchParams(location.search).get('service');
     if (preselected && [...select.options].some(option => option.value === preselected)) select.value = preselected;
 
+    const stockItem = new URLSearchParams(location.search).get('item');
+    const inquiryText = form.elements.namedItem('message');
+    if (stockItem && inquiryText && stockItem.length <= 130 && !inquiryText.value) {
+      inquiryText.value = `I'm interested in this in-stock item: ${stockItem}\n\n`; // visitor can edit
+    }
+
     const fileInput = document.getElementById('project-files');
     const fileList = document.getElementById('file-list');
     const uploadError = document.getElementById('upload-error');

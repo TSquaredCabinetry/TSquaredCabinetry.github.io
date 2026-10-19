@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "items": [
+    {
+      "id": "301b10a3202347eb",
+      "title": "Testing this shit out",
+      "price": 69.0,
+      "description": "Remove me",
+      "category": "We're selling this stock",
+      "labels": [
+        "Cabinets",
+        "Ready to sell"
+      ],
+      "photos": [
+        "assets/stock/301b10a3202347eb/01.webp"
+      ],
+      "created_at": "2026-10-19T20:20:02.414772+00:00"
+    }
+  ]
+}
