@@ -26,10 +26,21 @@
   }
   document.querySelectorAll('[data-year]').forEach(el => el.textContent = new Date().getFullYear());
   const galleries = window.T2_GALLERIES || {};
-  const all = ['kitchens', 'bathrooms', 'builtins', 'signs'].flatMap(k => galleries[k] || []);
+  // Page overrides are optional; untouched sections retain the original curated photos.
+  const page = location.pathname.split('/').pop() || 'index.html';
+  const pageGalleries = (window.T2_PAGE_GALLERIES || {})[page] || {};
+  const galleryFor = key => {
+    if (Array.isArray(pageGalleries[key])) return pageGalleries[key];
+    // Keep the project-gallery film filter in sync with edited category galleries.
+    if (page === 'gallery.html' && key === 'films')
+      return ['kitchens', 'bathrooms', 'builtins', 'signs']
+        .flatMap(category => galleryFor(category)).filter(item => item.video);
+    return galleries[key] || [];
+  };
+  const all = ['kitchens', 'bathrooms', 'builtins', 'signs'].flatMap(galleryFor);
   const escapeHTML = text => String(text ?? '').replace(/[&<>"']/g, x => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[x]));
   function createGallery(root) {
-    let items = root.dataset.gallery === 'all' ? all : (galleries[root.dataset.gallery] || []);
+    let items = root.dataset.gallery === 'all' ? all : galleryFor(root.dataset.gallery);
     let current = 0;
     root.classList.add('gallery-shell');
     root.setAttribute('role', 'region');
@@ -49,7 +60,14 @@
       thumbs.querySelectorAll('button').forEach(b => b.addEventListener('click', () => show(Number(b.dataset.go))));
     }
     function show(i) {
-      if (!items.length) return;
+      if (!items.length) {
+        display.textContent = 'No projects in this gallery yet.';
+        display.classList.remove('has-video');
+        caption.textContent = '';
+        detail.textContent = '';
+        counter.textContent = '00 / 00';
+        return;
+      }
       const playing = display.querySelector('video');
       if (playing) playing.pause();
       current = (i + items.length) % items.length;
@@ -102,7 +120,7 @@
   document.querySelectorAll('[data-gallery-filter]').forEach(button => button.addEventListener('click', () => {
     document.querySelectorAll('[data-gallery-filter]').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
     const key = button.dataset.galleryFilter;
-    changeMain?.(key === 'all' ? all : (galleries[key] || []));
+    changeMain?.(key === 'all' ? all : galleryFor(key));
   }));
 
   // Estimate form: FormSubmit handles native multipart POST, attachment delivery,
