@@ -2,19 +2,39 @@
   "version": 1,
   "items": [
     {
-      "id": "301b10a3202347eb",
-      "title": "Testing this shit out",
-      "price": 69.0,
-      "description": "Remove me",
+      "id": "d5545c693049496a",
+      "title": "Item 2",
+      "price": 40.0,
+      "description": "",
       "category": "We're selling this stock",
       "labels": [
         "Cabinets",
         "Ready to sell"
       ],
       "photos": [
-        "assets/stock/301b10a3202347eb/01.webp"
+        "assets/stock/d5545c693049496a/01.webp"
       ],
-      "created_at": "2026-10-19T20:20:02.414772+00:00"
+      "photo_labels": {},
+      "created_at": "2026-10-19T20:56:47.381489+00:00"
+    },
+    {
+      "id": "3741fc7524b84b87",
+      "title": "Item 1",
+      "price": 70.0,
+      "description": "I just need to test some things.",
+      "category": "We're selling this stock",
+      "labels": [
+        "Cabinets",
+        "Ready to sell",
+        "Remove Me",
+        "Label Checker",
+        "How many is too many?"
+      ],
+      "photos": [
+        "assets/stock/3741fc7524b84b87/01.webp"
+      ],
+      "photo_labels": {},
+      "created_at": "2026-10-19T20:56:36.352519+00:00"
     }
   ]
 }
