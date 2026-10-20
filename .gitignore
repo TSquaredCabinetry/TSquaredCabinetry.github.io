@@ -1,0 +1,10 @@
+# Never commit desktop dashboard data or Google account credentials into a public website.
+secrets/
+TTSquaredCreden.json
+credentials.json
+gmail_token.json
+token.json
+*.log
+__pycache__/
+.env
+.env.*
