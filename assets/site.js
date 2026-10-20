@@ -150,12 +150,15 @@
     const MAX_BYTES = 9 * 1024 * 1024; // FormSubmit permits up to 10 MB total.
     const allowedExtensions = /\.(pdf|png|jpe?g|webp|heic|docx?|txt)$/i;
 
-    // Only edit this address in contact.html. It also supplies the mailto fallback.
+    // FormSubmit accepts either an activated email address OR the opaque token
+    // from its confirmation email. Keep the URL as a native POST for CAPTCHA/files.
     const configuredURL = form.getAttribute('action') || '';
     const match = configuredURL.match(/^https:\/\/formsubmit\.co\/([^/?#]+)$/i);
     const destination = match ? decodeURIComponent(match[1]) : '';
-    const ready = !!destination && destination !== 'REPLACE_WITH_BUSINESS_EMAIL' &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination);
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination);
+    const isToken = /^[A-Za-z0-9_-]{12,}$/.test(destination);
+    const ready = (isEmail || isToken) &&
+      !['REPLACE_WITH_BUSINESS_EMAIL', 'REPLACE_WITH_FORM_SUBMIT_TOKEN'].includes(destination);
     // Attach the full public form URL as FormSubmit recommends when the
     // browser only sends an origin-level Referrer or the header is missing.
     // Do not populate _url on file:// or local previews.
@@ -167,10 +170,9 @@
       else sourceField.disabled = true;
     }
 
-    // Hold the branded redirect until someone verifies an inquiry in Gmail.
-    // Once verified, set this to true. Native POST + CAPTCHA remain enabled.
-    const ENABLE_CUSTOM_THANK_YOU = false;
-    if (ready && hosted && ENABLE_CUSTOM_THANK_YOU) {
+    // _next is processed by FormSubmit after its handling, not by a frontend
+    // success guess. CAPTCHA, bad setup, or request failures stay off our page.
+    if (ready && hosted) {
       const redirect = document.createElement('input');
       redirect.type = 'hidden';
       redirect.name = '_next';
@@ -248,7 +250,7 @@
       if (!ready || location.protocol === 'file:') {
         event.preventDefault();
         setupError.textContent = !ready
-          ? 'Online inquiries are not yet connected. Please call 336-655-0208.'
+          ? 'Online inquiries are not configured. Please call 336-655-0208.'
           : 'This form needs to be opened on the published website to test email delivery.';
         setupError.hidden = false;
         setupError.scrollIntoView({ block: 'nearest' });
