@@ -1,4 +1,4 @@
-"""Dependency-free sanity check for T-Squared HTML assets and nav links.
+"""sanity check for T-Squared HTML assets and nav links.
 Run: python validate_site.py
 """
 from pathlib import Path
