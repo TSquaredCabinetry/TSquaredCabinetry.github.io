@@ -435,13 +435,13 @@ strong {
   text-transform: uppercase
 }
 
-.arrow-link span {
-  font-size: 1.5rem;
-  line-height: 1;
+.arrow-link .icon-arrow-up-right {
+  width: 1.3em;
+  height: 1.3em;
   transition: transform .2s
 }
 
-.arrow-link:hover span {
+.arrow-link:hover .icon-arrow-up-right {
   transform: translateX(4px)
 }
 
@@ -1317,9 +1317,15 @@ strong {
 }
 
 .service-list li::before {
-  content: '↗';
-  color: var(--accent);
-  margin-right: 10px
+  content: '';
+  display: inline-block;
+  width: .95em;
+  height: .95em;
+  margin-right: 10px;
+  vertical-align: -.09em;
+  background-color: var(--accent);
+  -webkit-mask: url('icons/arrow-up-right.svg') center / contain no-repeat;
+  mask: url('icons/arrow-up-right.svg') center / contain no-repeat
 }
 
 /* Endcaps */
@@ -3306,4 +3312,18 @@ body {
 @media (max-width:910px) {
   .hero-grid { grid-template-columns:minmax(0,1fr); }
   .hero-grid > * { min-width:0; }
+}
+
+
+/* A real vector arrow, not a platform-dependent emoji. Its color always
+   inherits from the surrounding link, including on iOS Safari. */
+.icon-arrow-up-right {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: .95em;
+  height: .95em;
+  vertical-align: -.1em;
+  background-color: currentColor;
+  -webkit-mask: url('icons/arrow-up-right.svg') center / contain no-repeat;
+  mask: url('icons/arrow-up-right.svg') center / contain no-repeat
 }

@@ -95,7 +95,10 @@
       item.labels.slice(0, 8).forEach(value => tags.append(el('span', '', String(value))));
       body.append(tags);
     }
-    const link = el('a', 'btn', 'Ask about this item ↗');
+    const link = el('a', 'btn', 'Ask about this item');
+    const linkArrow = el('span', 'icon-arrow-up-right');
+    linkArrow.setAttribute('aria-hidden', 'true');
+    link.append(linkArrow);
     link.href = `contact.html?service=${encodeURIComponent('Wood / lumber inquiry')}&item=${encodeURIComponent(item.title)}`;
     body.append(link);
     card.append(body);

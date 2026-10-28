@@ -146,6 +146,7 @@
     const dialog = document.getElementById('upload-limit-dialog');
     const dialogTitle = document.getElementById('upload-dialog-title');
     const submitButton = form.querySelector('button[type="submit"]');
+    const submitLabel = submitButton.querySelector('.submit-label');
     const MAX_FILES = 5;
     const MAX_BYTES = 9 * 1024 * 1024; // FormSubmit permits up to 10 MB total.
     const allowedExtensions = /\.(pdf|png|jpe?g|webp|heic|docx?|txt)$/i;
@@ -260,11 +261,11 @@
       form.elements.namedItem('_subject').value = 'T-Squared website inquiry | ' + String(select.value || 'New project');
       // Do not preventDefault here. The native POST is required for attachments.
       submitButton.disabled = true;
-      submitButton.textContent = 'Sending…';
+      submitLabel.textContent = 'Sending…';
     });
     window.addEventListener('pageshow', () => {
       submitButton.disabled = false;
-      submitButton.textContent = 'Send project inquiry ↗';
+      submitLabel.textContent = 'Send the inquiry';
     });
   }
 })();
