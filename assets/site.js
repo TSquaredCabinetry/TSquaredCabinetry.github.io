@@ -171,15 +171,15 @@
       else sourceField.disabled = true;
     }
 
-    // _next is processed by FormSubmit after its handling, not by a frontend
-    // success guess. CAPTCHA, bad setup, or request failures stay off our page.
-    if (ready && hosted) {
-      const redirect = document.createElement('input');
-      redirect.type = 'hidden';
-      redirect.name = '_next';
-      redirect.value = new URL('inquiry-sent.html', location.href).href;
-      form.appendChild(redirect);
-    }
+    // // _next is processed by FormSubmit after its handling, not by a frontend
+    // // success guess. CAPTCHA, bad setup, or request failures stay off our page.
+    // if (ready && hosted) {
+    //   const redirect = document.createElement('input');
+    //   redirect.type = 'hidden';
+    //   redirect.name = '_next';
+    //   redirect.value = new URL('inquiry-sent.html', location.href).href;
+    //   form.appendChild(redirect);
+    // }
 
     function showLimit(message) {
       dialogTitle.textContent = message;
