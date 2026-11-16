@@ -247,12 +247,17 @@
             method="POST">
             <input name="_template" type="hidden" value="table"/>
             <input name="_captcha" type="hidden" value="true"/>
+            <input
+              type="hidden"
+              name="_next"
+              value="https://www.t-squared-cabinets.com/inquiry-sent.html"
+            />
             <!-- FormSubmit silently discards requests if this field has a value. -->
             <div class="form-honeypot" aria-hidden="true">
               <label for="inquiry-website">Website (leave blank)<input id="inquiry-website" name="_honey" type="text" tabindex="-1" autocomplete="off"/></label>
             </div>
             <input name="_subject" type="hidden" value="T-Squared | New project request"/>
-            <input name="_url" type="hidden" value=""/>
+            <input name="_url" type="hidden" value="https://www.t-squared-cabinets.com/contact.html"/>
             <p class="eyebrow">Project inquiry / Estimate request</p>
             <h3 style="font:normal 2.1rem var(--serif)">Start with the project.</h3>
             <div class="form-grid">
